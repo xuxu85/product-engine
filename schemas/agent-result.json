@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AgentResult",
+  "type": "object",
+  "required": ["decision", "output", "evidence", "invalidation_conditions"],
+  "properties": {
+    "decision": {"enum": ["PASS", "FAIL", "PIVOT"]},
+    "output": {"type": "object"},
+    "evidence": {"type": "array", "items": {"type": "object"}},
+    "invalidation_conditions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "next_stage": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}
