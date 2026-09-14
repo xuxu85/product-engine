@@ -1,0 +1,32 @@
+AGENT CONTRACT v0.1
+
+Agents are replaceable workers. They do not control pipeline routing, capital authorization, or stage transitions.
+
+INPUT
+{
+  "stage": "PAIN",
+  "input": {},
+  "constraints": {},
+  "evidence": []
+}
+
+OUTPUT
+{
+  "decision": "PASS",
+  "output": {},
+  "evidence": [],
+  "invalidation_conditions": [
+    "The pain is not recurring for the target consumer."
+  ]
+}
+
+RULES
+1. decision must be PASS, FAIL, or PIVOT.
+2. Every result must contain at least one measurable or testable invalidation condition.
+3. Evidence belongs to the agent result; routing belongs to the pipeline.
+4. next_stage is optional and must never contradict gate policy.
+5. Agents must not authorize purchases, inventory, production, or other capital deployment.
+6. Agents should return structured evidence and concise reasoning.
+
+DESIGN GOAL
+A future H10, Amazon, Reddit, sourcing, economics, or LLM agent can plug into the same contract without changing the core state machine.
