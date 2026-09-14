@@ -123,7 +123,10 @@ class ProjectManager:
                 objective=self._OBJECTIVE[stage],
                 bottleneck="PAIN",
                 blocked=True,
-                blocking_reason="Pain/review workflow is not available to execute this gate.",
+                blocking_reason=(
+                    "product-review-analyze-skill / review-analysis workflow is not available "
+                    "to execute this gate."
+                ),
                 next_action="Activate the existing review-analysis workflow; do not build a replacement.",
             )
 
