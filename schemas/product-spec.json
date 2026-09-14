@@ -17,7 +17,5 @@
     "validation_method": {"type": "string", "minLength": 1},
     "invalidation_condition": {"type": "string", "minLength": 1}
   },
-  "allOf": [
-    {"if": {"required": ["target_price", "max_landed_cost"]}, "then": {"properties": {"max_landed_cost": {"exclusiveMaximum": {"$data": "1/target_price"}}}}}
-  ]
+  "description": "max_landed_cost must be below target_price; this cross-field constraint is enforced by the Python ProductSpec validator."
 }
