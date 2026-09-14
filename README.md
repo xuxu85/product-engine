@@ -46,12 +46,71 @@ This repository is intentionally **not** a Product Intelligence Engine. It orche
                PIPELINE CORE
         contracts · state · gates · router
 
-                 NOTION = CONTROL PLANE
-                 GITHUB = CODE / VERSION
-                 LOCAL = EXECUTION
+              NOTION = BUSINESS CONTROL
+              GITHUB = ENGINEERING TRUTH
+              LOCAL / TOOLS = EXECUTION
 ```
 
 The user does not need to become a permanent researcher or engineer. The Project Manager determines what work is required; agents/workflows execute it; the pipeline decides whether the gate passes.
+
+## Source-of-truth boundary: Notion ↔ GitHub
+
+There is **one business system**, with two complementary records:
+
+### NOTION — business control plane / source of truth
+
+Notion must contain everything required to understand and manage the venture **without reading the code**:
+
+- current stage and gate;
+- PASS / FAIL / PIVOT decisions;
+- bottleneck;
+- evidence and evidence status;
+- product thesis and invalidation conditions;
+- economics and capital exposure;
+- supplier / pilot / sales status when reached;
+- project progress;
+- current dependencies and blockers that affect business execution;
+- the ONE CLEAR NEXT ACTION;
+- material architecture decisions that change how the venture is operated;
+- a concise engineering status when engineering affects a business gate.
+
+Notion must **not** become a mirror of the GitHub codebase. Do not copy files, functions, commits, implementation details, or technical logs into Notion unless they materially affect a business decision or gate.
+
+### GITHUB — engineering source of truth
+
+GitHub is authoritative for:
+
+- source code;
+- agent/workflow implementations;
+- contracts and schemas;
+- tests and CI;
+- provider adapters;
+- technical architecture;
+- implementation history and commits.
+
+GitHub does not replace Notion as the business control plane.
+
+### Synchronization rule
+
+The Project Manager owns the bridge between them:
+
+```text
+GITHUB / TOOLS
+      ↓
+engineering result / capability / blocker
+      ↓
+PROJECT MANAGER
+      ↓
+Does it affect a gate, decision, bottleneck, capital, risk or next action?
+      ├─ NO  → keep it in GitHub
+      └─ YES → record concise business impact in Notion
+```
+
+Therefore Notion should **reflect the business-relevant state of engineering**, not reproduce the engineering itself.
+
+Whenever a meaningful engineering change closes or changes a business dependency, the Project Manager must update Notion with:
+
+`WHAT CHANGED → BUSINESS IMPACT → GATE/STATE → DECISION → CAPITAL → NEXT ACTION`
 
 ## Pipeline
 
@@ -78,6 +137,8 @@ Every important thesis carries an explicit invalidation condition.
 5. **Capital is controlled at the decision layer.** Agents may estimate cost but never authorize material spend.
 6. **No automatic stage skipping.** The Router is authoritative for transitions.
 7. **One bottleneck at a time.** Research continues only when it closes the current decision gate.
+8. **Notion records business state; GitHub records implementation state.** The Project Manager synchronizes only business-relevant engineering changes into Notion.
+9. **No duplicate systems.** Do not create a second state machine, research database, orchestration layer, or project-control system when an existing component already closes the requirement.
 
 ## Current implementation
 
@@ -89,9 +150,10 @@ The repository already contains:
 - stage workers for downstream gates;
 - H10 adapter boundary;
 - tests and CI workflow;
-- progress model.
+- progress model;
+- Project Manager / Orchestrator control layer.
 
-The next control-layer addition is the Project Manager / Orchestrator. It should remain thin: planning, routing, enforcement, and dependency control—not a replacement for existing research tools.
+The Project Manager remains thin: planning, routing, enforcement, dependency control, and synchronization with the business control plane—not a replacement for existing research tools.
 
 ## Progress
 
