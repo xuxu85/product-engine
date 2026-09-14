@@ -34,15 +34,19 @@ ROUTER
 DECISION GATE
   ↓
 NEXT STAGE
+```
 
 The agent produces work.
 
 The pipeline decides what happens next.
 
-Agent Request
+---
+
+## Agent Request
 
 Agents receive:
 
+```json
 {
   "task_id": "string",
   "agent_id": "string",
@@ -52,57 +56,67 @@ Agents receive:
   "constraints": {},
   "evidence": []
 }
-Required fields
-task_id
+```
+
+### Required fields
+
+#### task_id
 
 Unique identifier for the execution task.
 
 Used to correlate the agent result with a pipeline run.
 
-agent_id
+#### agent_id
 
 Stable identifier of the agent.
 
 Examples:
 
+```text
 pain.amazon
 pain.reddit
 opportunity.h10
 sourcing.1688
 economics.basic
-agent_version
+```
+
+#### agent_version
 
 Version of the agent implementation.
 
-stage
+#### stage
 
 Current pipeline stage.
 
 The agent must operate within the supplied stage.
 
-input
+#### input
 
 Task-specific input.
 
-constraints
+#### constraints
 
 Rules and limits that the agent must respect.
 
 Examples:
 
-target market;
-target price;
-minimum evidence;
-validation budget;
-maximum capital exposure.
-evidence
+- target market;
+- target price;
+- minimum evidence;
+- validation budget;
+- maximum capital exposure.
+
+#### evidence
 
 Evidence already available to the agent.
 
-Agent Result
+---
+
+# Agent Result
 
 Every successful agent execution returns:
 
+```json
 {
   "task_id": "string",
   "agent_id": "string",
@@ -115,15 +129,22 @@ Every successful agent execution returns:
   "invalidation_conditions": [],
   "next_stage": null
 }
-Status
+```
+
+---
+
+## Status
 
 Valid values:
 
+```text
 SUCCESS
 ERROR
+```
 
 If execution fails:
 
+```json
 {
   "task_id": "string",
   "agent_id": "string",
@@ -138,43 +159,52 @@ If execution fails:
   ],
   "next_stage": null
 }
+```
 
 An agent must not fabricate evidence when execution fails.
 
-Decision
+---
+
+# Decision
 
 The only valid decisions are:
 
+```text
 PASS
 FAIL
 PIVOT
-PASS
+```
+
+### PASS
 
 The evidence is sufficient to pass the current gate.
 
-FAIL
+### FAIL
 
 The current hypothesis does not meet the gate requirements.
 
-PIVOT
+### PIVOT
 
 The evidence suggests that the current direction should change.
 
 The agent must not invent additional decision states.
 
-Evidence
+---
+
+# Evidence
 
 Evidence belongs to the agent result.
 
 Evidence should be:
 
-traceable;
-specific;
-relevant to the current decision;
-independently verifiable where possible.
+- traceable;
+- specific;
+- relevant to the current decision;
+- independently verifiable where possible.
 
 For consumer research, the preferred structure is:
 
+```json
 {
   "source": "Amazon",
   "source_url": "https://...",
@@ -184,24 +214,31 @@ For consumer research, the preferred structure is:
   "frequency_signal": "recurring",
   "verbatim": "..."
 }
+```
 
 Supported sources may include:
 
+```text
 Amazon
 Reddit
 Google
 Interview
 Other
+```
 
 Unsupported assumptions must not be presented as evidence.
 
-Confidence
+---
 
-confidence is a supporting signal only.
+# Confidence
+
+`confidence` is a supporting signal only.
 
 Valid range:
 
+```text
 0.0 – 1.0
+```
 
 Confidence MUST NOT replace evidence.
 
@@ -209,46 +246,58 @@ Confidence MUST NOT override gate policy.
 
 Example:
 
+```json
 {
   "confidence": 0.82
 }
-
-means the agent has relatively high confidence in its interpretation.
+```
 
 It does NOT mean the pipeline must PASS.
 
-Invalidation Conditions
+---
+
+# Invalidation Conditions
 
 Every agent result MUST contain at least one measurable or testable invalidation condition.
 
 Example:
 
+```json
 {
   "invalidation_conditions": [
     "Fewer than 5 independent consumer evidence sources confirm the same recurring pain."
   ]
 }
+```
 
 Good invalidation condition:
 
+```text
 FAIL if fewer than 5 independent evidence sources confirm
 the same recurring consumer problem.
+```
 
 Bad invalidation condition:
 
+```text
 The idea may not work.
+```
 
 The purpose of an invalidation condition is to define what future evidence would invalidate the current conclusion.
 
-Next Stage
+---
 
-next_stage is optional.
+# Next Stage
+
+`next_stage` is optional.
 
 Example:
 
+```json
 {
   "next_stage": "OPPORTUNITY"
 }
+```
 
 The agent may recommend a next stage.
 
@@ -260,6 +309,7 @@ If the proposed stage contradicts the gate policy, the Router rejects it.
 
 Therefore:
 
+```text
 Agent recommendation
         ↓
       Router
@@ -267,91 +317,109 @@ Agent recommendation
    Gate Policy
         ↓
 Authoritative transition
-Capital Control
+```
+
+---
+
+# Capital Control
 
 Agents NEVER authorize capital deployment.
 
 Agents may estimate:
 
-validation cost;
-supplier cost;
-landed cost;
-pilot cost;
-required resources.
+- validation cost;
+- supplier cost;
+- landed cost;
+- pilot cost;
+- required resources.
 
 Agents cannot independently authorize:
 
-inventory purchases;
-production orders;
-supplier payments;
-advertising spend;
-large validation budgets;
-pilot production;
-other material capital deployment.
+- inventory purchases;
+- production orders;
+- supplier payments;
+- advertising spend;
+- large validation budgets;
+- pilot production;
+- other material capital deployment.
 
 Capital decisions belong to the pipeline decision layer.
 
-Agent Responsibilities
+---
+
+# Agent Responsibilities
 
 An agent SHOULD:
 
-execute the assigned task;
-collect relevant evidence;
-structure the evidence;
-analyze the evidence;
-return a decision;
-define invalidation conditions;
-return machine-readable output;
-expose uncertainty where relevant.
+1. execute the assigned task;
+2. collect relevant evidence;
+3. structure the evidence;
+4. analyze the evidence;
+5. return a decision;
+6. define invalidation conditions;
+7. return machine-readable output;
+8. expose uncertainty where relevant.
 
 An agent MUST NOT:
 
-redefine the project goal;
-bypass a decision gate;
-independently change pipeline stage;
-authorize capital;
-fabricate evidence;
-hide execution errors;
-replace evidence with unsupported assumptions.
-Replaceability
+1. redefine the project goal;
+2. bypass a decision gate;
+3. independently change pipeline stage;
+4. authorize capital;
+5. fabricate evidence;
+6. hide execution errors;
+7. replace evidence with unsupported assumptions.
+
+---
+
+# Replaceability
 
 Agents are modular and replaceable.
 
 Different implementations may perform the same function:
 
+```text
 Amazon Pain Agent
 Reddit Pain Agent
 H10 Review Agent
 LLM Pain Agent
 Manual Research Agent
+```
 
 All should be able to return the same contract.
 
 The pipeline core must not depend on a specific agent implementation.
 
-Future Agents
+---
+
+# Future Agents
 
 The same contract can support:
 
-H10 research;
-Amazon research;
-review analysis;
-Reddit research;
-opportunity discovery;
-product thesis;
-demand validation;
-supplier research;
-RFQ;
-economics;
-sourcing;
-prototype;
-listing;
-launch.
+- H10 research;
+- Amazon research;
+- review analysis;
+- Reddit research;
+- opportunity discovery;
+- product thesis;
+- demand validation;
+- supplier research;
+- RFQ;
+- economics;
+- sourcing;
+- prototype;
+- listing;
+- launch.
 
 New agents should integrate through the contract rather than modify the core state machine unless a proven architectural requirement exists.
 
-Agent / Pipeline Boundary
-Agent
+---
+
+# Agent / Pipeline Boundary
+
+## Agent
+
+```text
 Research
 Analyze
 Extract
@@ -359,20 +427,28 @@ Score
 Recommend
 Return evidence
 Return result
-Pipeline
+```
+
+## Pipeline
+
+```text
 Validate result
 Apply gate policy
 Control stage transition
 Control capital
 Persist state
 Record history
+```
 
 This boundary is mandatory.
 
-Design Rule
+---
+
+# Design Rule
 
 Before building a new agent or intelligence layer:
 
+```text
 Existing Tool
       ↓
 Existing Agent / Workflow
@@ -382,13 +458,17 @@ Integration
 Minimal Adapter
       ↓
 Custom Development
+```
 
 Custom development should occur only when an existing solution does not adequately close the current bottleneck.
 
-Primary Project Metric
+---
+
+# Primary Project Metric
 
 The system exists to accelerate:
 
+```text
 EVIDENCE
 → DECISION
 → PRODUCT
@@ -397,9 +477,10 @@ EVIDENCE
 → FIRST REAL SALE
 → REPEAT PURCHASE
 → SCALE
+```
 
 Primary metric:
 
-TIME → FIRST REAL SALE
+> TIME → FIRST REAL SALE
 
 Any agent, workflow, or infrastructure component that does not materially improve the speed, cost, or quality of reaching the next decision gate should be deferred.
