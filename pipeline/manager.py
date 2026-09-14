@@ -8,6 +8,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from core.mechanism_registry import mechanisms_for
+
 from .state import Decision, PipelineState, Stage
 
 
@@ -102,8 +104,27 @@ class ProjectManager:
         available = available_mechanisms or set()
         paid = paid_dependencies or {}
 
+        # The registry is the canonical capability → ready-mechanism boundary.
+        # The PM may select only a mechanism that is explicitly registered.
+        if stage in {Stage.MARKET, Stage.PAIN}:
+            registered = mechanisms_for(
+                "amazon_product_discovery" if stage == Stage.MARKET else "review_pain_analysis"
+            )
+            if not registered:
+                return ExecutionPlan(
+                    stage=stage,
+                    lane=lane,
+                    mechanism=mechanism,
+                    objective=self._OBJECTIVE[stage],
+                    bottleneck=stage.value,
+                    blocked=True,
+                    blocking_reason="No ready mechanism is registered for this capability.",
+                    next_action="Search and inspect an existing repository/skill/API/MCP before building custom functionality.",
+                )
+            mechanism = registered[0].name
+
         # The manager never assumes a paid provider is available.
-        if stage == Stage.MARKET and "product-opportunity-finder-skill" not in available:
+        if stage == Stage.MARKET and mechanism not in available:
             return ExecutionPlan(
                 stage=stage,
                 lane=lane,
@@ -115,7 +136,7 @@ class ProjectManager:
                 next_action="Activate the existing Finder workflow or supply a verified equivalent.",
             )
 
-        if stage == Stage.PAIN and "product-review-analyze-skill" not in available:
+        if stage == Stage.PAIN and mechanism not in available:
             return ExecutionPlan(
                 stage=stage,
                 lane=lane,
