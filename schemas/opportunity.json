@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Opportunity",
+  "type": "object",
+  "required": ["title", "consumer", "pain", "evidence_count", "invalidation_condition"],
+  "properties": {
+    "title": {"type": "string", "minLength": 1},
+    "consumer": {"type": "string", "minLength": 1},
+    "pain": {"type": "string", "minLength": 1},
+    "pain_frequency": {"type": "string"},
+    "pain_severity": {"type": "number", "minimum": 0, "maximum": 10},
+    "evidence_count": {"type": "integer", "minimum": 1},
+    "opportunity_score": {"type": "number", "minimum": 0, "maximum": 100},
+    "target_price": {"type": "number", "exclusiveMinimum": 0},
+    "validation_cost": {"type": "number", "minimum": 0},
+    "capital_required": {"type": "number", "minimum": 0},
+    "invalidation_condition": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}
