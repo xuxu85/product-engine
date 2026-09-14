@@ -6,6 +6,7 @@ from pathlib import Path
 
 from .contracts import AgentResult
 from .runner import PipelineRunner
+from .state import Decision, Stage
 
 
 def main() -> None:
@@ -18,13 +19,16 @@ def main() -> None:
 
     if args.command == "status":
         state = runner.load_state()
-        print(json.dumps({"stage": state.stage.value, "decision": getattr(state.decision, "value", state.decision), "history": state.history}, indent=2))
+        print(json.dumps({"stage": state.stage.value, "decision": state.decision.value if state.decision else None, "history": state.history}, indent=2))
         return
 
     data = json.loads(Path(args.file).read_text(encoding="utf-8"))
+    data["decision"] = Decision(data["decision"])
+    if data.get("next_stage") is not None:
+        data["next_stage"] = Stage(data["next_stage"])
     result = AgentResult(**data)
     state = runner.apply(result)
-    print(json.dumps({"stage": state.stage.value, "decision": getattr(state.decision, "value", state.decision)}, indent=2))
+    print(json.dumps({"stage": state.stage.value, "decision": state.decision.value if state.decision else None}, indent=2))
 
 
 if __name__ == "__main__":
