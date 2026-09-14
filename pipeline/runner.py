@@ -4,9 +4,9 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
-from .contracts import AgentRequest, AgentResult
-from .router import apply_result
-from .state import PipelineState, Stage
+from .contracts import AgentResult
+from .router import Router
+from .state import Decision, PipelineState, Stage
 
 
 class PipelineRunner:
@@ -14,14 +14,16 @@ class PipelineRunner:
 
     def __init__(self, state_path: str | Path = "runs/current/state.json") -> None:
         self.state_path = Path(state_path)
+        self.router = Router()
 
     def load_state(self) -> PipelineState:
         if not self.state_path.exists():
             return PipelineState(stage=Stage.IDEA)
         data = json.loads(self.state_path.read_text(encoding="utf-8"))
+        decision = data.get("decision")
         return PipelineState(
             stage=Stage(data["stage"]),
-            decision=data.get("decision"),
+            decision=Decision(decision) if decision else None,
             payload=data.get("payload", {}),
             history=data.get("history", []),
         )
@@ -30,12 +32,11 @@ class PipelineRunner:
         self.state_path.parent.mkdir(parents=True, exist_ok=True)
         data = asdict(state)
         data["stage"] = state.stage.value
-        if state.decision is not None:
-            data["decision"] = state.decision.value
+        data["decision"] = state.decision.value if state.decision else None
         self.state_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
 
     def apply(self, result: AgentResult) -> PipelineState:
         state = self.load_state()
-        state = apply_result(state, result)
+        state = self.router.apply(state, result)
         self.save_state(state)
         return state
