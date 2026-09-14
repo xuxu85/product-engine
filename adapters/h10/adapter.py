@@ -44,7 +44,7 @@ def normalize_candidate(item: dict[str, Any], index: int = 0) -> dict[str, Any]:
         "monthly_revenue": _first(item, "monthly_revenue", "revenue", "estimated_monthly_revenue"),
         "review_count": _first(item, "review_count", "reviews", "number_of_reviews"),
         "rating": _first(item, "rating", "stars"),
-        "source": _first(item, "source", "provider", default="h10"),
+        "source": _first(item, "source", "provider"),
     }
 
     optional_metrics = item.get("metrics")
