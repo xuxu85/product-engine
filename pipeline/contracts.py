@@ -6,6 +6,26 @@ from typing import Any
 from .state import Decision, Stage
 
 
+def _coerce_stage(value: Stage | str | None, *, field_name: str) -> Stage | None:
+    if value is None:
+        return None
+    if isinstance(value, Stage):
+        return value
+    try:
+        return Stage(value)
+    except ValueError as exc:
+        raise ValueError(f"{field_name} must be a valid Stage") from exc
+
+
+def _coerce_decision(value: Decision | str) -> Decision:
+    if isinstance(value, Decision):
+        return value
+    try:
+        return Decision(value)
+    except ValueError as exc:
+        raise ValueError("decision must be a valid Decision") from exc
+
+
 @dataclass(frozen=True)
 class AgentRequest:
     stage: Stage
@@ -15,6 +35,11 @@ class AgentRequest:
     task_id: str = ""
     agent_id: str = ""
     agent_version: str = ""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "stage", _coerce_stage(self.stage, field_name="stage"))
+        if not isinstance(self.input, dict):
+            raise TypeError("input must be a dict")
 
 
 @dataclass(frozen=True)
@@ -29,6 +54,18 @@ class AgentResult:
     agent_version: str = ""
     status: str = "SUCCESS"
     confidence: float | None = None
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "decision", _coerce_decision(self.decision))
+        object.__setattr__(
+            self,
+            "next_stage",
+            _coerce_stage(self.next_stage, field_name="next_stage"),
+        )
+        if not isinstance(self.output, dict):
+            raise TypeError("output must be a dict")
+        if not isinstance(self.invalidation_conditions, list):
+            raise TypeError("invalidation_conditions must be a list")
 
     def validate(self) -> None:
         if self.status not in {"SUCCESS", "ERROR"}:
