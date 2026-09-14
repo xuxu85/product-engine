@@ -1,109 +1,146 @@
-# Agent Contract
+# Agent Contract v0.2
 
 ## Purpose
 
 Agents are replaceable workers inside the PRODUCT ENGINE pipeline.
 
-An agent performs a defined task and returns structured evidence and results.
+An agent performs a defined task and returns a structured result.
+
+The pipeline core is authoritative.
 
 Agents do NOT control:
 
 - pipeline routing;
 - decision gates;
-- capital allocation;
 - stage transitions;
+- capital allocation;
 - project-level strategy.
 
-These responsibilities belong to the pipeline core.
-
 ---
 
-## Core Principle
+## Architecture
 
-The pipeline controls the system.
-
-Agents provide work.
-
-Architecture:
-
+```text
 INPUT
-→ AGENT
-→ STRUCTURED RESULT
-→ VALIDATION
-→ ROUTER
-→ DECISION GATE
-→ NEXT STAGE
+  ↓
+AGENT
+  ↓
+AGENT RESULT
+  ↓
+VALIDATION
+  ↓
+ROUTER
+  ↓
+DECISION GATE
+  ↓
+NEXT STAGE
 
-An agent may recommend a next stage, but the pipeline policy is authoritative.
+The agent produces work.
 
----
+The pipeline decides what happens next.
 
-## Agent Input
+Agent Request
 
-Agents receive an `AgentRequest`.
+Agents receive:
 
-Conceptual structure:
-
-```json
 {
+  "task_id": "string",
+  "agent_id": "string",
+  "agent_version": "string",
   "stage": "PAIN",
   "input": {},
   "constraints": {},
   "evidence": []
 }
-Fields
+Required fields
+task_id
+
+Unique identifier for the execution task.
+
+Used to correlate the agent result with a pipeline run.
+
+agent_id
+
+Stable identifier of the agent.
+
+Examples:
+
+pain.amazon
+pain.reddit
+opportunity.h10
+sourcing.1688
+economics.basic
+agent_version
+
+Version of the agent implementation.
+
 stage
 
 Current pipeline stage.
 
-Examples:
+The agent must operate within the supplied stage.
 
-IDEA
-MARKET
-PAIN
-OPPORTUNITY
-PRODUCT_THESIS
-DEMAND_VALIDATION
-PRODUCT_SPEC
-FORMULA
-ECONOMICS
-MANUFACTURING
-PILOT
-SALES
-REPEAT
-SCALE
 input
 
-Task-specific input required by the agent.
+Task-specific input.
 
 constraints
 
-Rules or limits that the agent must respect.
+Rules and limits that the agent must respect.
 
 Examples:
 
-market;
+target market;
 target price;
-validation budget;
 minimum evidence;
+validation budget;
 maximum capital exposure.
 evidence
 
 Evidence already available to the agent.
 
-Agent Output
+Agent Result
 
-Every agent returns an AgentResult.
-
-Conceptual structure:
+Every successful agent execution returns:
 
 {
+  "task_id": "string",
+  "agent_id": "string",
+  "agent_version": "string",
+  "status": "SUCCESS",
   "decision": "PASS",
   "output": {},
   "evidence": [],
+  "confidence": 0.0,
   "invalidation_conditions": [],
   "next_stage": null
 }
+Status
+
+Valid values:
+
+SUCCESS
+ERROR
+
+If execution fails:
+
+{
+  "task_id": "string",
+  "agent_id": "string",
+  "agent_version": "string",
+  "status": "ERROR",
+  "decision": "FAIL",
+  "output": {},
+  "evidence": [],
+  "confidence": 0.0,
+  "invalidation_conditions": [
+    "Agent execution failed and result could not be independently verified."
+  ],
+  "next_stage": null
+}
+
+An agent must not fabricate evidence when execution fails.
+
 Decision
 
 The only valid decisions are:
@@ -113,67 +150,96 @@ FAIL
 PIVOT
 PASS
 
-The current gate has sufficient evidence to proceed.
+The evidence is sufficient to pass the current gate.
 
 FAIL
 
-The current hypothesis or gate should not proceed.
+The current hypothesis does not meet the gate requirements.
 
 PIVOT
 
-The current direction should change and return to the appropriate earlier stage.
+The evidence suggests that the current direction should change.
 
 The agent must not invent additional decision states.
 
 Evidence
 
-Agents are responsible for producing evidence relevant to their task.
+Evidence belongs to the agent result.
 
 Evidence should be:
 
 traceable;
 specific;
 relevant to the current decision;
-preferably independently verifiable.
+independently verifiable where possible.
 
-For consumer research, evidence may include:
+For consumer research, the preferred structure is:
 
-Amazon reviews;
-Reddit discussions;
-interviews;
-search behavior;
-marketplace observations;
-competitor evidence;
-other directly relevant consumer signals.
+{
+  "source": "Amazon",
+  "source_url": "https://...",
+  "consumer_context": "...",
+  "pain_statement": "...",
+  "intensity": 8,
+  "frequency_signal": "recurring",
+  "verbatim": "..."
+}
 
-Evidence should not be replaced by unsupported model assumptions.
+Supported sources may include:
+
+Amazon
+Reddit
+Google
+Interview
+Other
+
+Unsupported assumptions must not be presented as evidence.
+
+Confidence
+
+confidence is a supporting signal only.
+
+Valid range:
+
+0.0 – 1.0
+
+Confidence MUST NOT replace evidence.
+
+Confidence MUST NOT override gate policy.
+
+Example:
+
+{
+  "confidence": 0.82
+}
+
+means the agent has relatively high confidence in its interpretation.
+
+It does NOT mean the pipeline must PASS.
 
 Invalidation Conditions
 
-Every AgentResult MUST contain at least one measurable invalidation condition.
+Every agent result MUST contain at least one measurable or testable invalidation condition.
 
 Example:
 
 {
   "invalidation_conditions": [
-    "Fewer than 3 independent consumer evidence sources confirm the pain"
+    "Fewer than 5 independent consumer evidence sources confirm the same recurring pain."
   ]
 }
 
-An invalidation condition defines what evidence would cause the current conclusion to become invalid.
+Good invalidation condition:
 
-Good:
+FAIL if fewer than 5 independent evidence sources confirm
+the same recurring consumer problem.
 
-At least 5 independent consumers report the same recurring problem.
-
-Better:
-
-FAIL if fewer than 5 independent consumer evidence sources confirm
-the same problem at meaningful frequency.
-
-Bad:
+Bad invalidation condition:
 
 The idea may not work.
+
+The purpose of an invalidation condition is to define what future evidence would invalidate the current conclusion.
+
 Next Stage
 
 next_stage is optional.
@@ -184,45 +250,46 @@ Example:
   "next_stage": "OPPORTUNITY"
 }
 
-However:
+The agent may recommend a next stage.
 
-The agent does NOT control the pipeline transition.
+The agent does NOT control the transition.
 
-The Router validates the result against the deterministic gate policy.
+The Router MUST validate the proposed transition against the deterministic gate policy.
 
-If the agent proposes a stage that contradicts the gate policy, the Router must reject the override.
+If the proposed stage contradicts the gate policy, the Router rejects it.
 
 Therefore:
 
 Agent recommendation
         ↓
-Router
+      Router
         ↓
-Gate Policy
+   Gate Policy
         ↓
-Authoritative next stage
+Authoritative transition
 Capital Control
 
-Agents NEVER authorize meaningful capital expenditure.
+Agents NEVER authorize capital deployment.
 
-Agents may report:
+Agents may estimate:
 
-estimated validation cost;
-estimated supplier cost;
-estimated landed cost;
-estimated pilot cost;
+validation cost;
+supplier cost;
+landed cost;
+pilot cost;
 required resources.
 
-But the agent cannot independently authorize:
+Agents cannot independently authorize:
 
 inventory purchases;
 production orders;
-advertising spend;
 supplier payments;
+advertising spend;
 large validation budgets;
-pilot production.
+pilot production;
+other material capital deployment.
 
-Capital decisions belong to the pipeline policy and decision layer.
+Capital decisions belong to the pipeline decision layer.
 
 Agent Responsibilities
 
@@ -231,103 +298,59 @@ An agent SHOULD:
 execute the assigned task;
 collect relevant evidence;
 structure the evidence;
-produce a decision;
+analyze the evidence;
+return a decision;
 define invalidation conditions;
-return machine-readable output.
+return machine-readable output;
+expose uncertainty where relevant.
 
-An agent SHOULD NOT:
+An agent MUST NOT:
 
 redefine the project goal;
 bypass a decision gate;
-change the pipeline stage independently;
+independently change pipeline stage;
 authorize capital;
-create a new strategic thesis without being asked;
-hide uncertainty;
+fabricate evidence;
+hide execution errors;
 replace evidence with unsupported assumptions.
-Example: PAIN Agent
-
-Input:
-
-{
-  "stage": "PAIN",
-  "input": {
-    "category": "kitchen organization"
-  },
-  "constraints": {
-    "minimum_evidence": 5
-  },
-  "evidence": []
-}
-
-Output:
-
-{
-  "decision": "PASS",
-  "output": {
-    "pain_verified": true,
-    "pain_statement": "Consumers repeatedly struggle with ...",
-    "frequency": "recurring",
-    "severity": 7,
-    "evidence_count": 8
-  },
-  "evidence": [
-    {
-      "source": "Amazon",
-      "source_url": "...",
-      "consumer_context": "...",
-      "pain_statement": "...",
-      "intensity": 8,
-      "frequency_signal": "repeated",
-      "verbatim": "..."
-    }
-  ],
-  "invalidation_conditions": [
-    "Fewer than 5 independent evidence sources confirm the same recurring pain"
-  ],
-  "next_stage": "OPPORTUNITY"
-}
 Replaceability
 
 Agents are modular and replaceable.
 
-The pipeline must not depend on a specific implementation.
-
-For example:
+Different implementations may perform the same function:
 
 Amazon Pain Agent
 Reddit Pain Agent
+H10 Review Agent
 LLM Pain Agent
 Manual Research Agent
-H10 Review Agent
 
-can all produce the same AgentResult.
+All should be able to return the same contract.
 
-Therefore the core pipeline remains unchanged.
+The pipeline core must not depend on a specific agent implementation.
 
 Future Agents
 
 The same contract can support:
 
-H10 research agent;
-Amazon research agent;
-review analysis agent;
-Reddit research agent;
-opportunity finder;
-product thesis agent;
-validation agent;
-supplier research agent;
-RFQ agent;
-economics agent;
-sourcing agent;
-prototype agent;
-listing agent;
-launch agent.
+H10 research;
+Amazon research;
+review analysis;
+Reddit research;
+opportunity discovery;
+product thesis;
+demand validation;
+supplier research;
+RFQ;
+economics;
+sourcing;
+prototype;
+listing;
+launch.
 
-Each agent remains a worker.
+New agents should integrate through the contract rather than modify the core state machine unless a proven architectural requirement exists.
 
-The pipeline remains the controller.
-
-Boundary: Agent vs Pipeline
+Agent / Pipeline Boundary
 Agent
 Research
 Analyze
@@ -335,7 +358,7 @@ Extract
 Score
 Recommend
 Return evidence
-Return decision
+Return result
 Pipeline
 Validate result
 Apply gate policy
@@ -344,36 +367,39 @@ Control capital
 Persist state
 Record history
 
-This boundary must remain explicit.
+This boundary is mandatory.
 
 Design Rule
 
-Do not add intelligence to the pipeline core unless it is required for a decision gate.
+Before building a new agent or intelligence layer:
 
-Prefer:
+Existing Tool
+      ↓
+Existing Agent / Workflow
+      ↓
+Integration
+      ↓
+Minimal Adapter
+      ↓
+Custom Development
 
-Existing tool
-→ Existing agent / workflow
-→ Integration
-→ Minimal adapter
-→ Custom code only when proven necessary
+Custom development should occur only when an existing solution does not adequately close the current bottleneck.
 
-The objective is not to build a sophisticated AI platform.
+Primary Project Metric
 
-The objective is:
+The system exists to accelerate:
 
-Evidence
-→ Decision
-→ Product
-→ Prototype
-→ Pilot
-→ First Real Sale
-→ Repeat Purchase
-→ Scale
-Primary Metric
+EVIDENCE
+→ DECISION
+→ PRODUCT
+→ PROTOTYPE
+→ PILOT
+→ FIRST REAL SALE
+→ REPEAT PURCHASE
+→ SCALE
 
-The system should optimize for:
+Primary metric:
 
 TIME → FIRST REAL SALE
 
-Any component that does not materially improve the speed, cost, or quality of reaching the next decision gate should be deferred
+Any agent, workflow, or infrastructure component that does not materially improve the speed, cost, or quality of reaching the next decision gate should be deferred.
