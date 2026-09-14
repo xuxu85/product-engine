@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "product-spec.json",
+  "type": "object",
+  "required": ["product", "consumer", "problem", "use_case", "required_modification", "bundle", "target_price", "max_landed_cost", "initial_quantity", "market", "validation_method", "invalidation_condition"],
+  "properties": {
+    "product": {"type": "string", "minLength": 1},
+    "consumer": {"type": "string", "minLength": 1},
+    "problem": {"type": "string", "minLength": 1},
+    "use_case": {"type": "string", "minLength": 1},
+    "required_modification": {"type": "string"},
+    "bundle": {"type": "array", "items": {"type": "string"}},
+    "target_price": {"type": "number", "exclusiveMinimum": 0},
+    "max_landed_cost": {"type": "number", "exclusiveMinimum": 0},
+    "initial_quantity": {"type": "integer", "minimum": 1},
+    "market": {"type": "string", "minLength": 1},
+    "validation_method": {"type": "string", "minLength": 1},
+    "invalidation_condition": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {"if": {"required": ["target_price", "max_landed_cost"]}, "then": {"properties": {"max_landed_cost": {"exclusiveMaximum": {"$data": "1/target_price"}}}}}
+  ]
+}
