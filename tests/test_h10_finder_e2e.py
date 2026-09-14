@@ -6,7 +6,7 @@ from pipeline.router import route
 from pipeline.state import Decision, Stage
 
 
-def test_h10_to_opportunity_synthetic_e2e():
+def test_h10_to_pain_synthetic_e2e():
     raw = {
         "candidates": [
             {
@@ -33,12 +33,18 @@ def test_h10_to_opportunity_synthetic_e2e():
             },
         ]
     }
+
     normalized = H10Adapter().normalize(raw)
-    request = FinderInput().build(normalized["candidates"], evidence=normalized["evidence"])
+    request = FinderInput().build(normalized)
+
     finder_result = run_finder(request)
     assert finder_result.decision == Decision.PASS
     assert finder_result.next_stage == Stage.PAIN
 
     pain_request = route(request, finder_result)
+    assert pain_request.stage == Stage.PAIN
+    assert pain_request.input["candidates"] == normalized
+
     pain_result = run_pain(pain_request)
-    assert pain_result.decision in {Decision.PASS, Decision.FAIL}
+    assert pain_result.decision == Decision.FAIL
+    assert pain_result.output["pain_verified"] is False
