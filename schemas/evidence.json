@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CustomerEvidence",
+  "type": "object",
+  "required": ["source", "consumer_context", "pain_statement", "intensity", "frequency_signal"],
+  "properties": {
+    "source": {"type": "string"},
+    "source_url": {"type": "string"},
+    "consumer_context": {"type": "string"},
+    "pain_statement": {"type": "string", "minLength": 1},
+    "intensity": {"type": "number", "minimum": 0, "maximum": 10},
+    "frequency_signal": {"type": "string", "minLength": 1},
+    "verbatim": {"type": "string"}
+  },
+  "additionalProperties": false
+}
