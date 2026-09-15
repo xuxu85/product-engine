@@ -7,6 +7,14 @@ on:
         description: Amazon ASIN to test
         required: true
         default: B0FTX6XGP4
+      marketplace_url:
+        description: Amazon marketplace base URL
+        required: true
+        default: https://www.amazon.es
+      review_count:
+        description: Number of reviews to collect
+        required: true
+        default: "10"
 
 jobs:
   browseract_reviews:
@@ -21,6 +29,8 @@ jobs:
         env:
           BROWSERACT_API_KEY: ${{ secrets.BROWSERACT_API_KEY }}
           ASIN: ${{ inputs.asin }}
+          AMAZON_MARKETPLACE_URL: ${{ inputs.marketplace_url }}
+          BROWSERACT_REVIEW_COUNT: ${{ inputs.review_count }}
         run: |
           test -n "$BROWSERACT_API_KEY"
           python - <<'PY'
@@ -28,14 +38,24 @@ jobs:
           from adapters.browseract.reviews import run_reviews, extract_output, critical_reviews
 
           asin = os.environ["ASIN"]
-          task = run_reviews(asin)
+          marketplace_url = os.environ["AMAZON_MARKETPLACE_URL"]
+          review_count = int(os.environ["BROWSERACT_REVIEW_COUNT"])
+          task = run_reviews(
+              asin,
+              marketplace_url=marketplace_url,
+              review_count=review_count,
+          )
           output = extract_output(task)
           critical = critical_reviews(output)
           print(json.dumps({
               "asin": asin,
+              "marketplace_url": marketplace_url,
+              "review_count_requested": review_count,
               "provider": "browseract",
+              "template_id": "113863425622286759",
               "task_id": task.get("id"),
               "status": task.get("status"),
+              "review_count_returned": len(output.get("results", [])) if isinstance(output, dict) else None,
               "critical_review_count": len(critical),
               "critical_reviews": critical,
               "raw_output": output,
