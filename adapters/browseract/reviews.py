@@ -1,7 +1,8 @@
-"""BrowserAct provider adapter for Amazon Reviews API.
+"""BrowserAct provider adapter for Amazon Product Reviews Scraper.
 
-Provider boundary only: starts BrowserAct's official Amazon Reviews workflow
-and returns raw structured review records. It does not make business decisions.
+Provider boundary only: starts BrowserAct's marketplace-aware Amazon Reviews
+workflow and returns raw structured review records. It does not make business
+decisions.
 """
 from __future__ import annotations
 
@@ -13,7 +14,9 @@ import urllib.request
 from typing import Any
 
 API_BASE = "https://api.browseract.com/v2/workflow"
-DEFAULT_TEMPLATE_ID = "77817507798321724"
+DEFAULT_TEMPLATE_ID = "113863425622286759"
+DEFAULT_MARKETPLACE_URL = "https://www.amazon.es"
+DEFAULT_REVIEW_COUNT = 10
 
 
 def _request(url: str, api_key: str, method: str = "GET", body: Any = None) -> dict[str, Any]:
@@ -35,10 +38,12 @@ def run_reviews(
     asin: str,
     api_key: str | None = None,
     template_id: str | None = None,
+    marketplace_url: str | None = None,
+    review_count: int | None = None,
     poll_interval: float = 5.0,
     max_wait_seconds: int = 1800,
 ) -> dict[str, Any]:
-    """Run BrowserAct's no-login Amazon Reviews template for one ASIN."""
+    """Run BrowserAct's marketplace-aware Amazon Reviews template for one ASIN."""
     api_key = api_key or os.getenv("BROWSERACT_API_KEY")
     if not api_key:
         raise RuntimeError("BROWSERACT_API_KEY is required")
@@ -46,9 +51,19 @@ def run_reviews(
     template_id = template_id or os.getenv(
         "BROWSERACT_REVIEW_WORKFLOW_TEMPLATE_ID", DEFAULT_TEMPLATE_ID
     )
+    marketplace_url = marketplace_url or os.getenv(
+        "AMAZON_MARKETPLACE_URL", DEFAULT_MARKETPLACE_URL
+    )
+    review_count = review_count or int(
+        os.getenv("BROWSERACT_REVIEW_COUNT", str(DEFAULT_REVIEW_COUNT))
+    )
     payload = {
         "workflow_template_id": template_id,
-        "input_parameters": [{"name": "ASIN", "value": asin}],
+        "input_parameters": [
+            {"name": "Marketplace URL", "value": marketplace_url},
+            {"name": "ASIN", "value": asin},
+            {"name": "Review Count", "value": str(review_count)},
+        ],
     }
     started = _request(f"{API_BASE}/run-task-by-template", api_key, "POST", payload)
     task_id = started.get("id")
@@ -96,7 +111,7 @@ def critical_reviews(reviews: Any) -> list[dict[str, Any]]:
     for item in reviews:
         if not isinstance(item, dict):
             continue
-        rating = item.get("Rating", item.get("rating", item.get("stars")))
+        rating = item.get("star_rating", item.get("Rating", item.get("rating", item.get("stars"))))
         try:
             if float(rating) <= 2:
                 result.append(item)
