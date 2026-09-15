@@ -1,0 +1,22 @@
+name: BUILD Contract Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  contract-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout product-engine
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: python -m pip install --upgrade pip pytest
+
+      - name: Run BUILD and SHOV contract tests
+        run: python -m pytest tests/test_build_pipeline_contract.py tests/test_venture_core_shov_contract.py -q
