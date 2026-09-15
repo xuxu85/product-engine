@@ -49,7 +49,7 @@ class ProjectManager:
 
     _MECHANISM = {
         Stage.MARKET: "product-opportunity-finder-skill",
-        Stage.PAIN: "product-review-analyze-skill",
+        Stage.PAIN: "review_pain_analysis",
         Stage.OPPORTUNITY: "pain.workflow + opportunity handoff",
         Stage.PRODUCT_THESIS: "product-engine thesis worker",
         Stage.DEMAND_VALIDATION: "existing validation workflow",
@@ -105,11 +105,15 @@ class ProjectManager:
         paid = paid_dependencies or {}
 
         # The registry is the canonical capability → ready-mechanism boundary.
-        # The PM may select only a mechanism that is explicitly registered.
+        # For capabilities with multiple implementations, prefer an explicitly
+        # available mechanism; otherwise preserve registry order as the fallback.
         if stage in {Stage.MARKET, Stage.PAIN}:
-            registered = mechanisms_for(
-                "amazon_product_discovery" if stage == Stage.MARKET else "review_pain_analysis"
+            capability = (
+                "amazon_product_discovery"
+                if stage == Stage.MARKET
+                else "review_pain_analysis"
             )
+            registered = mechanisms_for(capability)
             if not registered:
                 return ExecutionPlan(
                     stage=stage,
@@ -121,7 +125,12 @@ class ProjectManager:
                     blocking_reason="No ready mechanism is registered for this capability.",
                     next_action="Search and inspect an existing repository/skill/API/MCP before building custom functionality.",
                 )
-            mechanism = registered[0].name
+            available_registered = tuple(m for m in registered if m.name in available)
+            mechanism = (
+                available_registered[0].name
+                if available_registered
+                else registered[0].name
+            )
 
         # The manager never assumes a paid provider is available.
         if stage == Stage.MARKET and mechanism not in available:
@@ -145,10 +154,10 @@ class ProjectManager:
                 bottleneck="PAIN",
                 blocked=True,
                 blocking_reason=(
-                    "product-review-analyze-skill / review-analysis workflow is not available "
+                    "No registered review-pain mechanism is currently available "
                     "to execute this gate."
                 ),
-                next_action="Activate the existing review-analysis workflow; do not build a replacement.",
+                next_action="Activate one registered review-pain mechanism; do not build a replacement.",
             )
 
         h10_required = stage in {Stage.MARKET, Stage.DEMAND_VALIDATION}
