@@ -1,0 +1,44 @@
+name: BrowserAct review runtime test
+
+on:
+  workflow_dispatch:
+    inputs:
+      asin:
+        description: Amazon ASIN to test
+        required: true
+        default: B0FTX6XGP4
+
+jobs:
+  browseract_reviews:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run BrowserAct Amazon Reviews test
+        env:
+          BROWSERACT_API_KEY: ${{ secrets.BROWSERACT_API_KEY }}
+        run: |
+          test -n "$BROWSERACT_API_KEY"
+          python - <<'PY'
+          import json, os
+          from adapters.browseract.reviews import run_reviews, extract_output, critical_reviews
+
+          asin = os.environ.get("ASIN", "")
+          task = run_reviews(asin)
+          output = extract_output(task)
+          critical = critical_reviews(output)
+          print(json.dumps({
+              "asin": asin,
+              "provider": "browseract",
+              "task_id": task.get("id"),
+              "status": task.get("status"),
+              "critical_review_count": len(critical),
+              "critical_reviews": critical,
+              "raw_output": output,
+          }, ensure_ascii=False, indent=2))
+          PY
+        env:
+          ASIN: ${{ inputs.asin }}
