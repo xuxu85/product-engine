@@ -35,6 +35,16 @@ READY_MECHANISMS = (
         repository="AronLEEdev/product-opportunity-finder-skill",
     ),
     Mechanism(
+        name="browseract-amazon-reviews-api",
+        function="review_pain_analysis",
+        lane="FINDER",
+        input_type="Amazon ASIN",
+        output_type="structured reviews: rating + title + review text + date + verified status + variant",
+        status="DEPENDENCY_REQUIRED",
+        dependency="BrowserAct API key; official Amazon Reviews workflow template",
+        repository="browser-act/skills",
+    ),
+    Mechanism(
         name="helium10-mcp-review-insights",
         function="review_pain_analysis",
         lane="FINDER",
