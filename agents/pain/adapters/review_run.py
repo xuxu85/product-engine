@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+from pipeline.contracts import AgentRequest
+
 from .review_evidence import reviews_to_evidence
 
 
@@ -35,6 +37,27 @@ def convert_reviews_to_evidence(
         json.dump(evidence, handle, ensure_ascii=False, indent=2)
 
     return evidence
+
+
+def request_from_review_output(
+    request: AgentRequest,
+    input_path: str | Path,
+) -> AgentRequest:
+    """Attach converted review evidence to the canonical PAIN request.
+
+    The upstream review skill remains responsible for collection and analysis;
+    this adapter only translates its structured artifact into our contract.
+    """
+    evidence = reviews_to_evidence(load_reviews(input_path))
+    return AgentRequest(
+        stage=request.stage,
+        input=request.input,
+        constraints=request.constraints,
+        evidence=evidence,
+        task_id=request.task_id,
+        agent_id=request.agent_id,
+        agent_version=request.agent_version,
+    )
 
 
 if __name__ == "__main__":
