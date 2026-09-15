@@ -4,6 +4,7 @@ import json
 from dataclasses import asdict
 from pathlib import Path
 
+from .business_state import BusinessState, project_business_state
 from .contracts import AgentRequest, AgentResult
 from .manager import ExecutionPlan, ProjectManager
 from .router import Router
@@ -64,6 +65,21 @@ class PipelineRunner:
                 "capital_required": plan.capital_required,
             },
             agent_id=plan.mechanism,
+        )
+
+    def business_state(
+        self,
+        *,
+        bottleneck: str = "",
+        capital_required: float = 0.0,
+        next_action: str = "",
+    ) -> BusinessState:
+        """Return the small business-level projection for Notion/control views."""
+        return project_business_state(
+            self.load_state(),
+            bottleneck=bottleneck,
+            capital_required=capital_required,
+            next_action=next_action,
         )
 
     def apply(self, result: AgentResult) -> PipelineState:
