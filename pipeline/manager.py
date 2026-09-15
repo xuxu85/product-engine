@@ -154,8 +154,8 @@ class ProjectManager:
                 bottleneck="PAIN",
                 blocked=True,
                 blocking_reason=(
-                    "No registered review-pain mechanism is currently available "
-                    "to execute this gate."
+                    f"No registered review-pain mechanism is currently available "
+                    f"to execute this gate (selected: {mechanism}; legacy capability: review-analysis)."
                 ),
                 next_action="Activate one registered review-pain mechanism; do not build a replacement.",
             )
