@@ -7,7 +7,7 @@ jobs:
   contract-test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout product-engine
         uses: actions/checkout@v4
 
       - name: Set up Python
@@ -18,5 +18,5 @@ jobs:
       - name: Install test dependencies
         run: python -m pip install --upgrade pip pytest
 
-      - name: Run BUILD contract test
-        run: python -m pytest tests/test_build_pipeline_contract.py -q
+      - name: Run BUILD and SHOV contract tests
+        run: python -m pytest tests/test_build_pipeline_contract.py tests/test_venture_core_shov_contract.py -q
