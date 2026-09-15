@@ -35,6 +35,16 @@ READY_MECHANISMS = (
         repository="AronLEEdev/product-opportunity-finder-skill",
     ),
     Mechanism(
+        name="helium10-mcp-review-insights",
+        function="review_pain_analysis",
+        lane="FINDER",
+        input_type="Amazon ASIN or category/niche + marketplace",
+        output_type="review insights: rating distribution + sentiment + keywords + complaint themes + improvement priorities",
+        status="DEPENDENCY_REQUIRED",
+        dependency="Helium 10 Diamond+ MCP access/OAuth",
+        repository="helium10/Helium10-MCP",
+    ),
+    Mechanism(
         name="product-review-analyze-skill",
         function="review_pain_analysis",
         lane="FINDER",
