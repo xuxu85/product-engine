@@ -1,0 +1,35 @@
+name: BrowserAct contract preflight
+
+on:
+  workflow_dispatch:
+    inputs:
+      workflow_name:
+        description: BrowserAct workflow name to resolve
+        required: true
+        default: Amazon Product Reviews Scraper Bot
+
+jobs:
+  browseract_preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Validate BrowserAct workflow contract (no task execution)
+        env:
+          BROWSERACT_API_KEY: ${{ secrets.BROWSERACT_API_KEY }}
+          BROWSERACT_REVIEW_WORKFLOW_NAME: ${{ inputs.workflow_name }}
+        run: |
+          test -n "$BROWSERACT_API_KEY"
+          python - <<'PY'
+          import os
+          from adapters.browseract.reviews import _find_workflow_id, _preflight_workflow
+
+          name = os.environ["BROWSERACT_REVIEW_WORKFLOW_NAME"]
+          workflow_id = _find_workflow_id(os.environ["BROWSERACT_API_KEY"], name)
+          _preflight_workflow(os.environ["BROWSERACT_API_KEY"], workflow_id)
+          print(f"PREFLIGHT_PASS workflow_name={name!r} workflow_id={workflow_id}")
+          print("NO_BROWSERACT_TASK_STARTED=true")
+          PY
