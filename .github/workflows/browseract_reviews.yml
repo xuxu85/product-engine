@@ -20,13 +20,14 @@ jobs:
       - name: Run BrowserAct Amazon Reviews test
         env:
           BROWSERACT_API_KEY: ${{ secrets.BROWSERACT_API_KEY }}
+          ASIN: ${{ inputs.asin }}
         run: |
           test -n "$BROWSERACT_API_KEY"
           python - <<'PY'
           import json, os
           from adapters.browseract.reviews import run_reviews, extract_output, critical_reviews
 
-          asin = os.environ.get("ASIN", "")
+          asin = os.environ["ASIN"]
           task = run_reviews(asin)
           output = extract_output(task)
           critical = critical_reviews(output)
@@ -40,5 +41,3 @@ jobs:
               "raw_output": output,
           }, ensure_ascii=False, indent=2))
           PY
-        env:
-          ASIN: ${{ inputs.asin }}
