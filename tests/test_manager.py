@@ -1,4 +1,6 @@
+from pipeline.contracts import AgentRequest
 from pipeline.manager import ProjectManager
+from pipeline.runner import PipelineRunner
 from pipeline.state import PipelineState, Stage, Decision
 
 
@@ -34,3 +36,25 @@ def test_pass_is_the_only_advancing_decision():
     assert ProjectManager.can_route(Decision.PASS) is True
     assert ProjectManager.can_route(Decision.FAIL) is False
     assert ProjectManager.can_route(Decision.PIVOT) is False
+
+
+def test_runner_bridges_pm_registry_to_canonical_agent_request(tmp_path):
+    runner = PipelineRunner(tmp_path / "state.json")
+    runner.save_state(PipelineState(stage=Stage.PAIN))
+
+    plan = runner.plan(
+        available_mechanisms={"product-review-analyze-skill"},
+    )
+    request = runner.request(
+        available_mechanisms={"product-review-analyze-skill"},
+        input={"marketplace": "Amazon.es"},
+    )
+
+    assert plan.blocked is False
+    assert plan.mechanism == "product-review-analyze-skill"
+    assert isinstance(request, AgentRequest)
+    assert request.stage is Stage.PAIN
+    assert request.agent_id == "product-review-analyze-skill"
+    assert request.input == {"marketplace": "Amazon.es"}
+    assert request.constraints["mechanism"] == "product-review-analyze-skill"
+    assert request.constraints["bottleneck"] == "PAIN"
