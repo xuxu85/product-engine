@@ -18,24 +18,25 @@ def run_build(
     registry: BuildMechanismRegistry,
     mechanism_id: str,
     inputs: dict[str, Any],
-    executor: Callable[[dict[str, Any]], dict[str, Any]],
+    executor: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Validate inputs, execute one registered mechanism, and return its result.
 
-    This function deliberately does not advance the business pipeline. The
-    canonical router owns PASS/FAIL/PIVOT routing; BUILD only produces a
-    validated execution artifact.
+    The canonical pipeline router still owns PASS/FAIL/PIVOT routing; BUILD
+    only produces a structured execution artifact.
     """
     mechanism = registry.get(mechanism_id)
-    validation = registry.validate_inputs(mechanism_id, inputs)
-    if not validation.ok:
+    missing = mechanism.validate_input(inputs)
+    if missing:
         return {
             "status": "BLOCKED",
-            "mechanism_id": mechanism_id,
-            "missing_inputs": validation.missing,
+            "mechanism_id": mechanism.id,
+            "mechanism_version": mechanism.version,
+            "missing_inputs": missing,
         }
 
-    output = executor(inputs)
+    runner = executor or mechanism.runner
+    output = runner(inputs)
     if not isinstance(output, dict):
         raise BuildExecutionError("BUILD mechanism must return a dictionary")
 
