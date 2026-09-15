@@ -1,8 +1,8 @@
-"""BrowserAct provider adapter for Amazon Product Reviews Scraper.
+"""BrowserAct provider adapter for Amazon Product Reviews.
 
-Provider boundary only: starts BrowserAct's marketplace-aware Amazon Reviews
-workflow and returns raw structured review records. It does not make business
-decisions.
+Provider boundary only: resolve and validate the real workflow contract before
+starting a task, then validate returned structured output before downstream
+handoff. It does not make business decisions.
 """
 from __future__ import annotations
 
@@ -13,10 +13,24 @@ import urllib.parse
 import urllib.request
 from typing import Any
 
+from core.mechanism_contract import FieldSpec, MechanismContract, require_valid, validate_inputs, validate_output
+
 API_BASE = "https://api.browseract.com/v2/workflow"
 DEFAULT_TEMPLATE_ID = "113863425622286759"
+DEFAULT_WORKFLOW_NAME = "Amazon Product Reviews Scraper Bot"
 DEFAULT_MARKETPLACE_URL = "https://www.amazon.es"
 DEFAULT_REVIEW_COUNT = 10
+
+REVIEW_CONTRACT = MechanismContract(
+    mechanism="browseract-amazon-reviews-api",
+    input_fields=(
+        FieldSpec("Marketplace URL"),
+        FieldSpec("ASIN"),
+        FieldSpec("Review Count"),
+    ),
+    output_required_keys=("results",),
+    output_item_required_keys=("asin", "review_text", "star_rating"),
+)
 
 
 def _request(url: str, api_key: str, method: str = "GET", body: Any = None) -> dict[str, Any]:
@@ -34,6 +48,37 @@ def _request(url: str, api_key: str, method: str = "GET", body: Any = None) -> d
         return json.loads(response.read().decode("utf-8"))
 
 
+def _find_workflow_id(api_key: str, workflow_name: str) -> str:
+    payload = _request(
+        f"{API_BASE}/list-workflows?{urllib.parse.urlencode({'page': 1, 'limit': 500})}",
+        api_key,
+    )
+    matches = [
+        item for item in payload.get("items", [])
+        if str(item.get("name", "")).strip() == workflow_name
+    ]
+    if len(matches) != 1:
+        raise RuntimeError(
+            f"BrowserAct workflow preflight failed: expected exactly one workflow named {workflow_name!r}, found {len(matches)}"
+        )
+    return str(matches[0]["id"])
+
+
+def _preflight_workflow(api_key: str, workflow_id: str) -> None:
+    workflow = _request(
+        f"{API_BASE}/get-workflow?{urllib.parse.urlencode({'workflow_id': workflow_id})}",
+        api_key,
+    )
+    actual = {str(item.get("name")): item for item in workflow.get("input_parameters", [])}
+    expected = {field.name for field in REVIEW_CONTRACT.input_fields if field.required}
+    missing = sorted(expected - set(actual))
+    if missing:
+        raise RuntimeError(
+            "BrowserAct workflow preflight failed: missing required provider inputs: "
+            + ", ".join(missing)
+        )
+
+
 def run_reviews(
     asin: str,
     api_key: str | None = None,
@@ -43,7 +88,7 @@ def run_reviews(
     poll_interval: float = 5.0,
     max_wait_seconds: int = 1800,
 ) -> dict[str, Any]:
-    """Run BrowserAct's marketplace-aware Amazon Reviews template for one ASIN."""
+    """Preflight the provider contract, then run one BrowserAct review task."""
     api_key = api_key or os.getenv("BROWSERACT_API_KEY")
     if not api_key:
         raise RuntimeError("BROWSERACT_API_KEY is required")
@@ -51,21 +96,33 @@ def run_reviews(
     template_id = template_id or os.getenv(
         "BROWSERACT_REVIEW_WORKFLOW_TEMPLATE_ID", DEFAULT_TEMPLATE_ID
     )
+    workflow_name = os.getenv("BROWSERACT_REVIEW_WORKFLOW_NAME", DEFAULT_WORKFLOW_NAME)
     marketplace_url = marketplace_url or os.getenv(
         "AMAZON_MARKETPLACE_URL", DEFAULT_MARKETPLACE_URL
     )
     review_count = review_count or int(
         os.getenv("BROWSERACT_REVIEW_COUNT", str(DEFAULT_REVIEW_COUNT))
     )
+
+    values = {
+        "Marketplace URL": marketplace_url,
+        "ASIN": asin,
+        "Review Count": str(review_count),
+    }
+    require_valid(validate_inputs(REVIEW_CONTRACT, values))
+
+    workflow_id = _find_workflow_id(api_key, workflow_name)
+    _preflight_workflow(api_key, workflow_id)
+
     payload = {
-        "workflow_template_id": template_id,
+        "workflow_id": workflow_id,
         "input_parameters": [
             {"name": "Marketplace URL", "value": marketplace_url},
             {"name": "ASIN", "value": asin},
             {"name": "Review Count", "value": str(review_count)},
         ],
     }
-    started = _request(f"{API_BASE}/run-task-by-template", api_key, "POST", payload)
+    started = _request(f"{API_BASE}/run-task", api_key, "POST", payload)
     task_id = started.get("id")
     if not task_id:
         raise RuntimeError(f"BrowserAct did not return task id: {started}")
@@ -78,6 +135,8 @@ def run_reviews(
         )
         state = str(status.get("status", "")).lower()
         if state in {"finished", "completed", "success"}:
+            output = extract_output(status)
+            require_valid(validate_output(REVIEW_CONTRACT, output))
             return status
         if state in {"failed", "error", "canceled", "cancelled"}:
             raise RuntimeError(f"BrowserAct task {task_id} failed: {status}")
