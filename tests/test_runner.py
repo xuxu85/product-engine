@@ -26,3 +26,21 @@ def test_runner_persists_and_reloads_state(tmp_path):
     assert reloaded.stage == Stage.MARKET
     assert reloaded.decision == Decision.PASS
     assert reloaded.history[-1]["decision"] == "PASS"
+
+
+def test_runner_projects_business_state(tmp_path):
+    runner = PipelineRunner(tmp_path / "state.json")
+
+    business = runner.business_state(
+        bottleneck="verified consumer pain/opportunity evidence",
+        capital_required=0.0,
+        next_action="execute product-review-analyze-skill",
+    )
+
+    assert business.stage == "IDEA"
+    assert business.progress_percent == 0
+    assert business.current_gate == "IDEA"
+    assert business.bottleneck == "verified consumer pain/opportunity evidence"
+    assert business.capital_required == 0.0
+    assert business.next_action == "execute product-review-analyze-skill"
+    assert business.status == "OPEN"
