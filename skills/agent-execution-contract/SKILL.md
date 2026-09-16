@@ -1,11 +1,13 @@
 # AGENT EXECUTION CONTRACT
-## Universal Stateful Agent Skill v1.1
+## Universal Stateful Agent Skill v2.0
 
 ### PURPOSE
 Maintain a VERIFIED EXECUTION CORRIDOR and prevent state loss, manual bridging, unsupported assumptions, silent stage skipping, and rebuilding capabilities that already exist.
 
+The agent's job is to move the system forward through the current gate, not restart analysis.
+
 ## 1. STATE FIRST
-Before substantive analysis/execution establish:
+Before substantive analysis or execution establish:
 
 SYSTEM / STAGE / GATE / BOTTLENECK / DECISION / CAPITAL / NEXT ACTION.
 
@@ -18,12 +20,14 @@ DECISION / STATUS / EVIDENCE / RATIONALE / INVALIDATION CONDITIONS / NEXT ACTION
 
 Continue from it. Do not reopen a closed decision without explicit invalidation.
 
+If no snapshot exists, create a minimal snapshot before continuing.
+
 ## 3. MODES
-Every report declares:
+Every report declares exactly one:
 
-[ANALYSIS MODE] or [EXECUTION MODE].
+[ANALYSIS MODE] or [EXECUTION MODE]
 
-In EXECUTION MODE execute the approved path without introducing unnecessary hypotheses or reopening closed decisions.
+In EXECUTION MODE execute the approved path without unnecessary hypotheses, redesign, or reopening closed decisions.
 
 ## 4. UNIVERSAL CAPABILITY EXECUTION PROTOCOL
 Whenever any agent needs an external or internal capability—research source, marketplace, supplier, manufacturer, laboratory, API, MCP, browser workflow, data provider, logistics/compliance service, or other platform—the agent MUST bind the capability before using it.
@@ -47,6 +51,8 @@ Search in this order:
 8. minimal bridge;
 9. custom development only for a demonstrated missing function.
 
+Do not restart discovery from zero when a compatible fallback exists.
+
 ### 4.2 BIND
 Before execution record:
 
@@ -58,7 +64,8 @@ INPUT SCHEMA:
 OUTPUT SCHEMA:
 VALIDATION/JUDGE:
 PERSISTENCE TARGET:
-FALLBACKS (if required):
+FALLBACKS:
+STATUS:
 
 A provider, skill, interface, schema, README, connector, registry entry, or prompt is not an executor.
 
@@ -69,7 +76,7 @@ Use real input whenever the capability affects a business gate. Examples/mocks m
 Verify:
 - executor actually ran;
 - output exists;
-- output matches declared schema;
+- output matches the declared schema;
 - required fields are present;
 - provenance/source/period/marketplace/method are retained where material;
 - output is not silently fabricated or transformed;
@@ -85,7 +92,7 @@ Capability lifecycle:
 
 FOUND → EXECUTABLE → OUTPUT_VERIFIED → JUDGE_VERIFIED → END_TO_END_VERIFIED.
 
-Use VERIFIED only after real execution evidence. Otherwise use UNVERIFIED, BLOCKED, or FAILED.
+Use VERIFIED only after real execution evidence. Otherwise use UNVERIFIED, BLOCKED, FAILED, or UNAVAILABLE.
 
 ## 5. NODE CONTRACT
 Every pipeline node declares:
@@ -94,25 +101,28 @@ NODE / PURPOSE / INPUT / EXECUTOR / OUTPUT / JUDGE / PERSISTENCE / NEXT NODE.
 
 Canonical node sequence:
 
-INPUT → EXECUTOR → OUTPUT → JUDGE → PERSIST → NEXT NODE.
+INPUT → EXECUTOR → OUTPUT → JUDGE → PERSIST → HANDOFF → NEXT NODE.
 
 A node is not complete merely because its code, interface, schema, prompt, or documentation exists.
 
 ## 6. DATA CONTRACTS
 Every material output has a declared schema. Downstream nodes consume that schema.
 
-Schema mismatch / missing required fields / unsupported transformation → STOP.
+Schema mismatch, missing required fields, or unsupported transformation → STOP.
 
 Do not silently reinterpret or manufacture missing fields.
 
 ## 7. JUDGE
-Every meaningful executable node requires a Judge returning exactly:
+Every meaningful executable node requires a Judge returning:
 
 PASS / FAIL / PIVOT / BLOCKED.
 
 Execution success ≠ business success.
 
-Examples: reviews collected ≠ pain validated; API returned data ≠ demand gate passed.
+Examples:
+API returned data ≠ demand gate passed.
+Reviews collected ≠ pain validated.
+Pain detected ≠ commercial opportunity validated.
 
 ## 8. FAILURE ENFORCEMENT
 Missing input / executor / verified output / schema / judge / persistence / downstream consumption → STOP.
@@ -135,14 +145,24 @@ ARCHITECTURAL GAP.
 
 Repeated manual bridging requires a minimal architecture repair. Do not hide the gap by doing the work manually.
 
-## 10. READY-MECHANISM / FALLBACK RULE
-If the preferred provider is unavailable, do not restart the capability search from zero.
+If a temporary manual bridge is used for debugging:
+- label it DEBUG ONLY;
+- do not mark the corridor production-ready;
+- define the missing automated seam;
+- create a repair action.
 
-Use the bound capability contract to select the next compatible verified executor. A fallback must satisfy the same required input/output contract or declare the exact incompatibility.
+## 10. READY-MECHANISM / FALLBACK RULE
+If the preferred provider is unavailable, do not restart capability discovery from zero.
+
+Use the bound capability contract to select the next compatible existing executor. A fallback must satisfy the required input/output contract or declare the exact incompatibility and use an explicit adapter node.
 
 Provider-specific details belong in the capability descriptor; agent logic remains provider-neutral.
 
-## 11. REGISTRY RULE
+If a mechanism exists but its executor is unverified, verify it before building a replacement.
+
+If no compatible mechanism exists, build only the missing function.
+
+## 11. CAPABILITY REGISTRY
 A capability registry is discovery/routing metadata, never proof of execution.
 
 A registry entry MUST distinguish at minimum:
@@ -181,9 +201,9 @@ If invalidated:
 STOP → FLAG → REASSESS.
 
 ## 15. BUILD-TIME AUDIT
-Before creating/modifying a workflow, skill, adapter, schema, registry entry, or agent, inspect the complete intended corridor:
+Before creating or modifying a workflow, skill, adapter, schema, registry entry, or agent, inspect the complete intended corridor:
 
-INPUT → EXECUTOR → OUTPUT → JUDGE → PERSISTENCE → NEXT NODE.
+INPUT → EXECUTOR → OUTPUT → JUDGE → PERSISTENCE → HANDOFF → NEXT NODE.
 
 For every seam ask:
 
@@ -213,11 +233,9 @@ EXTERNAL TOOLS = execution/data mechanisms.
 Notion records business-relevant state, decisions, gates, blockers, capital, risk and next action—not technical implementation logs.
 
 ## 18. BUILD / EXECUTION LOOP
-
 UPDATE STATE → CHECK DECISION → CHECK GATE → DISCOVER/BIND CAPABILITY → VERIFY INPUT → EXECUTE → VALIDATE OUTPUT → JUDGE → PERSIST → HANDOFF → UPDATE STATE → ONE NEXT ACTION.
 
 ## 19. RESPONSE CONTRACT
-
 [MODE]
 STATE: SYSTEM / STAGE / GATE / BOTTLENECK
 CAPABILITY: SOURCE / SKILL / EXECUTOR
@@ -231,9 +249,18 @@ CAPITAL:
 TIME → FIRST REAL SALE IMPACT:
 NEXT ACTION:
 
-For blocked work use the BLOCKED format above.
+For blocked work use the BLOCKED format from §8.
 
 ## 20. MASTER RULE
 Never make the system appear more complete than it is.
+
+If a mechanism is missing, say it is missing.
+If an interface exists but executor does not, say: INTERFACE EXISTS — EXECUTOR UNVERIFIED/MISSING.
+If output was not persisted, say: OUTPUT NOT PERSISTED.
+If the next node cannot consume the output, say: CORRIDOR BROKEN.
+If manual bridging is required, say: ARCHITECTURAL GAP.
+
+Never compensate for an architectural gap with hidden manual reasoning.
+Never treat documentation, a repository, a skill, an API, an MCP, or an interface as proof of execution.
 
 The objective is not an impressive answer. The objective is a VERIFIED EXECUTION CORRIDOR from real input to judged, persisted output that the next node can consume.
