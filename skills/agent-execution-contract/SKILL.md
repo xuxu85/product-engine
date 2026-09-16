@@ -1,143 +1,123 @@
 # AGENT EXECUTION CONTRACT
-## Universal Stateful Agent Skill v1.0
+## Universal Stateful Agent Skill v1.1
 
-### Purpose
+### PURPOSE
+Maintain a VERIFIED EXECUTION CORRIDOR and prevent state loss, manual bridging, unsupported assumptions, silent stage skipping, and rebuilding capabilities that already exist.
 
-This skill defines the execution discipline for agents operating inside Product Engine.
-The objective is to maintain a VERIFIED EXECUTION CORRIDOR and prevent loss of state,
-implicit manual bridging, unsupported assumptions, and silent stage skipping.
+## 1. STATE FIRST
+Before substantive analysis/execution establish:
 
-## 1. State First
+SYSTEM / STAGE / GATE / BOTTLENECK / DECISION / CAPITAL / NEXT ACTION.
 
-Before substantive analysis or execution, establish:
+If canonical persisted state cannot establish these, STOP. Do not reconstruct business state from conversation when persisted state is expected.
 
-- SYSTEM
-- STAGE
-- GATE
-- BOTTLENECK
-- DECISION
-- CAPITAL
-- NEXT ACTION
-
-If the current state cannot be established from canonical persisted state, STOP.
-Do not reconstruct the business state from conversational memory when a persisted
-source is expected to exist.
-
-## 2. Decision Snapshot
-
-For a previously discussed topic, recover the latest valid decision snapshot:
+## 2. DECISION SNAPSHOT
+For previously discussed topics recover the latest:
 
 DECISION / STATUS / EVIDENCE / RATIONALE / INVALIDATION CONDITIONS / NEXT ACTION.
 
-Continue from it. Do not restart closed analysis unless an explicit invalidation
-condition has triggered.
+Continue from it. Do not reopen a closed decision without explicit invalidation.
 
-## 3. Execution Modes
+## 3. MODES
+Every report declares:
 
-Every execution report declares either:
+[ANALYSIS MODE] or [EXECUTION MODE].
 
-[ANALYSIS MODE]
+In EXECUTION MODE execute the approved path without introducing unnecessary hypotheses or reopening closed decisions.
 
-or
+## 4. UNIVERSAL CAPABILITY EXECUTION PROTOCOL
+Whenever any agent needs an external or internal capability—research source, marketplace, supplier, manufacturer, laboratory, API, MCP, browser workflow, data provider, logistics/compliance service, or other platform—the agent MUST bind the capability before using it.
 
-[EXECUTION MODE]
+Canonical sequence:
 
-In EXECUTION MODE, execute the approved path without introducing new hypotheses or
-reopening closed decisions.
+CAPABILITY → SOURCE/PLATFORM → SKILL/WORKFLOW → EXECUTOR → INPUT CONTRACT → REAL EXECUTION → OUTPUT CONTRACT → VALIDATION/JUDGE → ARTIFACT → HANDOFF.
 
-## 4. Node Contract
+The agent MUST NOT stop at “skill found”, “API available”, “repository exists”, or “provider supports X”.
 
-Every pipeline node MUST declare:
+### 4.1 DISCOVER
+Search in this order:
 
-NODE
-PURPOSE
-INPUT
-EXECUTOR
-OUTPUT
-JUDGE
-PERSISTENCE
-NEXT NODE
+1. existing working capability;
+2. repository;
+3. skill;
+4. workflow;
+5. API;
+6. MCP;
+7. existing integration/connection;
+8. minimal bridge;
+9. custom development only for a demonstrated missing function.
 
-The canonical execution sequence is:
+### 4.2 BIND
+Before execution record:
 
-INPUT → EXECUTOR → OUTPUT → JUDGE → PERSIST → NEXT NODE
+CAPABILITY:
+SOURCE/PLATFORM:
+SKILL/WORKFLOW:
+EXECUTOR:
+INPUT SCHEMA:
+OUTPUT SCHEMA:
+VALIDATION/JUDGE:
+PERSISTENCE TARGET:
+FALLBACKS (if required):
 
-A node is not complete merely because an interface, schema, repository, prompt,
-connector, or documentation exists.
+A provider, skill, interface, schema, README, connector, registry entry, or prompt is not an executor.
 
-## 5. Component Is Not a Mechanism
+### 4.3 EXECUTE
+Use real input whenever the capability affects a business gate. Examples/mocks may validate interfaces only.
 
-The following are NOT proof of execution capability:
+### 4.4 VALIDATE
+Verify:
+- executor actually ran;
+- output exists;
+- output matches declared schema;
+- required fields are present;
+- provenance/source/period/marketplace/method are retained where material;
+- output is not silently fabricated or transformed;
+- downstream consumer can accept it.
 
-- interface
-- schema
-- repository
-- README
-- prompt
-- connector
-- API description
-- agent definition
+### 4.5 PERSIST + HANDOFF
+Persist every material output before advancing. Pass the persisted artifact through the declared output contract to the next node.
 
-A mechanism is VERIFIED only when:
+Conversation text is not the canonical data bus.
 
-1. real input exists;
-2. an executor exists;
-3. the executor actually runs;
-4. output is produced;
-5. output matches the declared schema;
-6. a judge evaluates the output;
-7. the output is persisted;
-8. the downstream node can consume the persisted output.
+### 4.6 STATUS
+Capability lifecycle:
 
-Until all conditions are satisfied, status is UNVERIFIED.
+FOUND → EXECUTABLE → OUTPUT_VERIFIED → JUDGE_VERIFIED → END_TO_END_VERIFIED.
 
-## 6. Data Contracts
+Use VERIFIED only after real execution evidence. Otherwise use UNVERIFIED, BLOCKED, or FAILED.
 
-Every material node output MUST have a declared schema.
-Downstream nodes MUST consume the declared schema.
+## 5. NODE CONTRACT
+Every pipeline node declares:
 
-Schema mismatch → STOP.
-Missing required fields → STOP.
-Unsupported transformation → STOP.
+NODE / PURPOSE / INPUT / EXECUTOR / OUTPUT / JUDGE / PERSISTENCE / NEXT NODE.
+
+Canonical node sequence:
+
+INPUT → EXECUTOR → OUTPUT → JUDGE → PERSIST → NEXT NODE.
+
+A node is not complete merely because its code, interface, schema, prompt, or documentation exists.
+
+## 6. DATA CONTRACTS
+Every material output has a declared schema. Downstream nodes consume that schema.
+
+Schema mismatch / missing required fields / unsupported transformation → STOP.
 
 Do not silently reinterpret or manufacture missing fields.
 
-## 7. Persistence / Data Bus
+## 7. JUDGE
+Every meaningful executable node requires a Judge returning exactly:
 
-The canonical persisted project state is the system data bus.
-Conversation memory is not the system data bus.
+PASS / FAIL / PIVOT / BLOCKED.
 
-Every material output MUST be persisted before advancing to the next node.
-If an output exists only in the conversation, mark it NOT PERSISTED and do not
-represent the corridor as closed.
+Execution success ≠ business success.
 
-## 8. Judge
+Examples: reviews collected ≠ pain validated; API returned data ≠ demand gate passed.
 
-Every meaningful executable node requires a Judge.
-The Judge returns exactly one of:
+## 8. FAILURE ENFORCEMENT
+Missing input / executor / verified output / schema / judge / persistence / downstream consumption → STOP.
 
-PASS / FAIL / PIVOT / BLOCKED
-
-Execution success does not imply business success.
-
-Examples:
-
-reviews collected ≠ pain validated
-API returned data ≠ trend gate passed
-pain detected ≠ opportunity validated
-
-## 9. Failure Enforcement
-
-Missing input → STOP
-Missing executor → STOP
-Unverified executor → STOP
-Missing output → STOP
-Schema mismatch → STOP
-Judge failure → STOP
-Persistence failure → STOP
-Downstream consumption failure → STOP
-
-When blocked, report:
+When blocked report:
 
 BLOCKED AT:
 REASON:
@@ -146,51 +126,53 @@ ACTUAL:
 MINIMAL REPAIR:
 NEXT ACTION:
 
-## 10. Manual Bridging
+## 9. NO SILENT MANUAL BRIDGING
+Manual transformation is allowed for debugging only.
 
-Manual transformation between nodes is permitted only for debugging.
+If normal operation requires copying, rewriting, interpreting, or reconstructing data between nodes, mark:
 
-If normal operation requires copying, rewriting, interpreting, or reconstructing
-an output between nodes, mark:
+ARCHITECTURAL GAP.
 
-ARCHITECTURAL GAP
+Repeated manual bridging requires a minimal architecture repair. Do not hide the gap by doing the work manually.
 
-Do not hide an architectural gap by performing the transformation silently.
-Repeated manual bridging requires a minimal architecture repair proposal.
+## 10. READY-MECHANISM / FALLBACK RULE
+If the preferred provider is unavailable, do not restart the capability search from zero.
 
-## 11. Ready-Mechanism-First
+Use the bound capability contract to select the next compatible verified executor. A fallback must satisfy the same required input/output contract or declare the exact incompatibility.
 
-Before building a new function, inspect in this order:
+Provider-specific details belong in the capability descriptor; agent logic remains provider-neutral.
 
-1. existing working tool;
-2. repository;
-3. skill;
-4. workflow;
-5. API;
-6. MCP;
-7. integration/connection;
-8. minimal custom bridge;
-9. custom development only for a demonstrated missing function.
+## 11. REGISTRY RULE
+A capability registry is discovery/routing metadata, never proof of execution.
 
-If a verified mechanism closes the requirement, use it.
-Do not build a replacement.
+A registry entry MUST distinguish at minimum:
 
-## 12. Anti-Complexity
+FOUND / EXECUTABLE / VERIFIED / BLOCKED / FAILED
 
-Before adding a component, ask:
+and reference the executor, input/output contracts, validation evidence, and last verification.
 
-"Is this required to pass the current gate?"
+## 12. PERSISTENCE / DATA BUS
+Every material artifact MUST be persisted before the next node is activated.
 
-If no → DO NOT BUILD.
+If output exists only in conversation:
 
-Do not add databases, dashboards, agents, APIs, orchestration layers, or
-infrastructure merely because they appear cleaner or more complete.
+OUTPUT NOT PERSISTED.
 
-## 13. Closed Decisions / Invalidation
+If next node cannot consume it:
 
-A closed decision remains closed until an explicit invalidation condition triggers.
+CORRIDOR BROKEN.
 
-Every important decision must record:
+## 13. GATE DISCIPLINE
+Typical sequence:
+
+MARKET → DEMAND → EVIDENCE → THESIS → VALIDATION → FORMULA → ECONOMICS → MANUFACTURING → PILOT → SALES → REPEAT → SCALE.
+
+No silent downstream gate skipping.
+
+Research must address the current bottleneck and change a decision; otherwise do not collect it.
+
+## 14. CLOSED DECISIONS / INVALIDATION
+Every important decision records:
 
 DECISION / DATE / EVIDENCE / STATUS / INVALIDATION CONDITIONS.
 
@@ -198,105 +180,60 @@ If invalidated:
 
 STOP → FLAG → REASSESS.
 
-## 14. Gate Discipline
+## 15. BUILD-TIME AUDIT
+Before creating/modifying a workflow, skill, adapter, schema, registry entry, or agent, inspect the complete intended corridor:
 
-The agent must know the current gate and may not silently skip downstream gates.
-Typical sequence:
+INPUT → EXECUTOR → OUTPUT → JUDGE → PERSISTENCE → NEXT NODE.
 
-MARKET → DEMAND → EVIDENCE → THESIS → VALIDATION → FORMULA → ECONOMICS →
-MANUFACTURING → PILOT → SALES → REPEAT → SCALE
+For every seam ask:
 
-A downstream gate is not passed until the current gate has passed.
+EXISTS? / EXECUTABLE? / VERIFIED? / SCHEMA-COMPATIBLE? / PERSISTED? / CONSUMABLE?
 
-## 15. Research Discipline
+If an upstream executor is merely documented or registered, STOP downstream implementation and perform verification or minimal repair first.
 
-Research must address the current bottleneck.
-Before collecting additional data, ask whether it can change the current decision.
-If not, do not collect it.
-
-## 16. Build / Audit Loop
-
-For every meaningful cycle:
-
-UPDATE STATE
-→ CHECK DECISION SNAPSHOT
-→ CHECK CURRENT GATE
-→ INSPECT EXISTING MECHANISMS
-→ VERIFY INPUT
-→ EXECUTE
-→ VALIDATE OUTPUT
-→ JUDGE
-→ PERSIST
-→ UPDATE STATE
-→ EXECUTE ONE NEXT ACTION
-
-## 17. Architecture Audit
-
-Before implementing or modifying a pipeline node:
+## 16. ARCHITECTURE AUDIT
+Before implementation:
 
 1. read canonical project state;
-2. read decision ledger;
-3. read canonical architecture;
-4. read this execution contract;
-5. inspect existing skills/workflows/mechanisms;
-6. verify INPUT → EXECUTOR → OUTPUT → JUDGE;
-7. identify the smallest real gap;
-8. implement only that gap;
-9. test the seam;
-10. persist the result;
-11. report the business-relevant state change.
+2. read decision ledger/architecture;
+3. read this contract;
+4. inspect existing mechanisms and capability registry;
+5. bind INPUT → EXECUTOR → OUTPUT;
+6. verify the seam with real input;
+7. implement only the smallest missing gap;
+8. test;
+9. persist evidence;
+10. report business impact.
 
-## 18. Source-of-Logic Boundary
+## 17. SOURCE-OF-LOGIC BOUNDARY
+NOTION = business control plane.
+GITHUB = engineering source of truth.
+EXTERNAL TOOLS = execution/data mechanisms.
 
-Notion is the business control plane.
-GitHub is the engineering source of truth.
-External tools are approved execution/data mechanisms.
+Notion records business-relevant state, decisions, gates, blockers, capital, risk and next action—not technical implementation logs.
 
-Do not copy technical implementation into Notion unless it materially changes a
-business gate, decision, risk, capital exposure, blocker, or next action.
+## 18. BUILD / EXECUTION LOOP
 
-## 19. Response Contract
+UPDATE STATE → CHECK DECISION → CHECK GATE → DISCOVER/BIND CAPABILITY → VERIFY INPUT → EXECUTE → VALIDATE OUTPUT → JUDGE → PERSIST → HANDOFF → UPDATE STATE → ONE NEXT ACTION.
 
-Execution reports use:
+## 19. RESPONSE CONTRACT
 
 [MODE]
-
-STATE:
-SYSTEM:
-STAGE:
-GATE:
-BOTTLENECK:
-
+STATE: SYSTEM / STAGE / GATE / BOTTLENECK
+CAPABILITY: SOURCE / SKILL / EXECUTOR
 INPUT:
-EXECUTOR:
 OUTPUT:
 JUDGE:
 PERSISTENCE:
-
 STATUS:
-
 DECISION:
 CAPITAL:
 TIME → FIRST REAL SALE IMPACT:
 NEXT ACTION:
 
-If blocked, use the BLOCKED format defined above.
+For blocked work use the BLOCKED format above.
 
-## 20. Master Rule
+## 20. MASTER RULE
+Never make the system appear more complete than it is.
 
-Never make the system appear more complete than it actually is.
-
-If an interface exists but the executor does not, state:
-
-INTERFACE EXISTS — EXECUTOR MISSING/UNVERIFIED.
-
-If output is not persisted, state:
-
-OUTPUT NOT PERSISTED.
-
-If the next node cannot consume the output, state:
-
-CORRIDOR BROKEN.
-
-The objective is not to produce an impressive answer. The objective is to maintain
-a VERIFIED EXECUTION CORRIDOR from real input to judged, persisted output.
+The objective is not an impressive answer. The objective is a VERIFIED EXECUTION CORRIDOR from real input to judged, persisted output that the next node can consume.
