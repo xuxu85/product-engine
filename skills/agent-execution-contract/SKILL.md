@@ -1,5 +1,5 @@
 # AGENT EXECUTION CONTRACT
-## Universal Stateful Agent Skill v2.0
+## Universal Stateful Agent Skill v2.1
 
 ### PURPOSE
 Maintain a VERIFIED EXECUTION CORRIDOR and prevent state loss, manual bridging, unsupported assumptions, silent stage skipping, and rebuilding capabilities that already exist.
@@ -83,7 +83,7 @@ Verify:
 - downstream consumer can accept it.
 
 ### 4.5 PERSIST + HANDOFF
-Persist every material output before advancing. Pass the persisted artifact through the declared output contract to the next node.
+Persist every material output before advancing. Pass the persisted artifact through the declared output contract to the next execution step.
 
 Conversation text is not the canonical data bus.
 
@@ -94,26 +94,28 @@ FOUND → EXECUTABLE → OUTPUT_VERIFIED → JUDGE_VERIFIED → END_TO_END_VERIF
 
 Use VERIFIED only after real execution evidence. Otherwise use UNVERIFIED, BLOCKED, FAILED, or UNAVAILABLE.
 
-## 5. NODE CONTRACT
-Every pipeline node declares:
+## 5. EXECUTION STEP CONTRACT
+The project is a pipeline, not necessarily a graph. An execution step is a bounded operation within the current stage; verified execution corridors connect steps.
 
-NODE / PURPOSE / INPUT / EXECUTOR / OUTPUT / JUDGE / PERSISTENCE / NEXT NODE.
+Every execution step declares:
 
-Canonical node sequence:
+STEP / PURPOSE / INPUT / EXECUTOR / OUTPUT / JUDGE / PERSISTENCE / NEXT EXECUTION STEP.
 
-INPUT → EXECUTOR → OUTPUT → JUDGE → PERSIST → HANDOFF → NEXT NODE.
+Canonical step sequence:
 
-A node is not complete merely because its code, interface, schema, prompt, or documentation exists.
+INPUT → EXECUTOR → OUTPUT → JUDGE → PERSIST → HANDOFF → NEXT EXECUTION STEP.
+
+An execution step is not complete merely because its code, interface, schema, prompt, or documentation exists.
 
 ## 6. DATA CONTRACTS
-Every material output has a declared schema. Downstream nodes consume that schema.
+Every material output has a declared schema. Downstream steps consume that schema.
 
 Schema mismatch, missing required fields, or unsupported transformation → STOP.
 
 Do not silently reinterpret or manufacture missing fields.
 
 ## 7. JUDGE
-Every meaningful executable node requires a Judge returning:
+Every meaningful executable step requires a Judge returning:
 
 PASS / FAIL / PIVOT / BLOCKED.
 
@@ -139,7 +141,7 @@ NEXT ACTION:
 ## 9. NO SILENT MANUAL BRIDGING
 Manual transformation is allowed for debugging only.
 
-If normal operation requires copying, rewriting, interpreting, or reconstructing data between nodes, mark:
+If normal operation requires copying, rewriting, interpreting, or reconstructing data between execution steps, mark:
 
 ARCHITECTURAL GAP.
 
@@ -154,7 +156,7 @@ If a temporary manual bridge is used for debugging:
 ## 10. READY-MECHANISM / FALLBACK RULE
 If the preferred provider is unavailable, do not restart capability discovery from zero.
 
-Use the bound capability contract to select the next compatible existing executor. A fallback must satisfy the required input/output contract or declare the exact incompatibility and use an explicit adapter node.
+Use the bound capability contract to select the next compatible existing executor. A fallback must satisfy the required input/output contract or declare the exact incompatibility and use an explicit adapter step.
 
 Provider-specific details belong in the capability descriptor; agent logic remains provider-neutral.
 
@@ -172,13 +174,13 @@ FOUND / EXECUTABLE / VERIFIED / BLOCKED / FAILED
 and reference the executor, input/output contracts, validation evidence, and last verification.
 
 ## 12. PERSISTENCE / DATA BUS
-Every material artifact MUST be persisted before the next node is activated.
+Every material artifact MUST be persisted before the next execution step is activated.
 
 If output exists only in conversation:
 
 OUTPUT NOT PERSISTED.
 
-If next node cannot consume it:
+If next execution step cannot consume it:
 
 CORRIDOR BROKEN.
 
@@ -203,7 +205,7 @@ STOP → FLAG → REASSESS.
 ## 15. BUILD-TIME AUDIT
 Before creating or modifying a workflow, skill, adapter, schema, registry entry, or agent, inspect the complete intended corridor:
 
-INPUT → EXECUTOR → OUTPUT → JUDGE → PERSISTENCE → HANDOFF → NEXT NODE.
+INPUT → EXECUTOR → OUTPUT → JUDGE → PERSISTENCE → HANDOFF → NEXT EXECUTION STEP.
 
 For every seam ask:
 
@@ -257,10 +259,10 @@ Never make the system appear more complete than it is.
 If a mechanism is missing, say it is missing.
 If an interface exists but executor does not, say: INTERFACE EXISTS — EXECUTOR UNVERIFIED/MISSING.
 If output was not persisted, say: OUTPUT NOT PERSISTED.
-If the next node cannot consume the output, say: CORRIDOR BROKEN.
+If the next execution step cannot consume the output, say: CORRIDOR BROKEN.
 If manual bridging is required, say: ARCHITECTURAL GAP.
 
 Never compensate for an architectural gap with hidden manual reasoning.
 Never treat documentation, a repository, a skill, an API, an MCP, or an interface as proof of execution.
 
-The objective is not an impressive answer. The objective is a VERIFIED EXECUTION CORRIDOR from real input to judged, persisted output that the next node can consume.
+The objective is not an impressive answer. The objective is a VERIFIED EXECUTION CORRIDOR from real input to judged, persisted output that the next execution step can consume.
